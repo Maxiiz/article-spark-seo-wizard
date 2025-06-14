@@ -22,7 +22,7 @@ export default function Writer() {
         keyword_count: Number(keywordCount),
       };
 
-      const response = await fetch("https://your-n8n-domain/webhook/gen", {
+      const response = await fetch("http://localhost:5678/webhook-test/gen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
