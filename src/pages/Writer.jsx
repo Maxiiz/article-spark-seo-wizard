@@ -78,6 +78,7 @@ const Writer = () => {
       });
 
       if (response.ok) {
+        // รับ response เป็น text แทน JSON
         const result = await response.text();
         setGeneratedArticle(result);
         toast({
@@ -177,143 +178,185 @@ ${formData.topic} เป็นเรื่องที่มีความส�
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gradient mb-2">เขียนบทความ SEO อัตโนมัติ</h1>
             <p className="text-gray-600">สร้างบทความคุณภาพสูงด้วย AI</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* ฟอร์มตั้งค่า */}
-            <Card className="glass">
-              <CardHeader>
-                <CardTitle>ตั้งค่าบทความ</CardTitle>
-                <CardDescription>กรอกข้อมูลเพื่อสร้างบทความ SEO</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="topic">หัวข้อบทความ</Label>
-                  <Input
-                    id="topic"
-                    value={formData.topic}
-                    onChange={(e) => handleInputChange('topic', e.target.value)}
-                    placeholder="กรอกหัวข้อบทความที่ต้องการ"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="length">ความยาวบทความ</Label>
-                  <Select value={formData.length} onValueChange={(value) => handleInputChange('length', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="short">สั้น (300-500 คำ)</SelectItem>
-                      <SelectItem value="medium">กลาง (500-800 คำ)</SelectItem>
-                      <SelectItem value="long">ยาว (800-1200 คำ)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="style">สไตล์บทความ</Label>
-                  <Select value={formData.style} onValueChange={(value) => handleInputChange('style', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="How-to">How-to (วิธีการ)</SelectItem>
-                      <SelectItem value="AIDA">AIDA (การตลาด)</SelectItem>
-                      <SelectItem value="Review">Review (รีวิว)</SelectItem>
-                      <SelectItem value="EEAT">E-E-A-T (ความน่าเชื่อถือ)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="keywords">จำนวนคีย์เวิร์ด</Label>
-                  <Select value={formData.keywordCount.toString()} onValueChange={(value) => handleInputChange('keywordCount', parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="3">3 คีย์เวิร์ด</SelectItem>
-                      <SelectItem value="5">5 คีย์เวิร์ด</SelectItem>
-                      <SelectItem value="7">7 คีย์เวิร์ด</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button 
-                  onClick={generateArticle} 
-                  className="w-full" 
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      กำลังสร้างบทความ...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="h-4 w-4 mr-2" />
-                      สร้างบทความ
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* แสดงผลลัพธ์ */}
-            <Card className="glass">
-              <CardHeader>
-                <CardTitle>บทความที่สร้างแล้ว</CardTitle>
-                <CardDescription>ผลลัพธ์บทความ SEO ที่ AI สร้างให้คุณ</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-                    <p className="text-gray-600 text-center">
-                      กำลังสร้างบทความ SEO ที่ดีที่สุดสำหรับคุณ...
-                    </p>
-                  </div>
-                ) : generatedArticle ? (
-                  <>
-                    <Textarea
-                      value={generatedArticle}
-                      readOnly
-                      className="min-h-96 font-mono text-sm"
-                      placeholder="บทความจะแสดงที่นี่..."
+            <div className="lg:col-span-1">
+              <Card className="glass sticky top-8">
+                <CardHeader>
+                  <CardTitle>ตั้งค่าบทความ</CardTitle>
+                  <CardDescription>กรอกข้อมูลเพื่อสร้างบทความ SEO</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="topic">หัวข้อบทความ</Label>
+                    <Input
+                      id="topic"
+                      value={formData.topic}
+                      onChange={(e) => handleInputChange('topic', e.target.value)}
+                      placeholder="กรอกหัวข้อบทความที่ต้องการ"
                     />
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={copyToClipboard}
-                        variant="outline" 
-                        className="flex-1"
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        คัดลอก
-                      </Button>
-                      <Button 
-                        onClick={downloadArticle}
-                        variant="outline" 
-                        className="flex-1"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        ดาวน์โหลด
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium mb-2">ยังไม่มีบทความ</p>
-                    <p className="text-sm">กรุณากรอกข้อมูลและกดปุ่ม "สร้างบทความ" เพื่อเริ่มต้น</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="length">ความยาวบทความ</Label>
+                    <Select value={formData.length} onValueChange={(value) => handleInputChange('length', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="short">สั้น (300-500 คำ)</SelectItem>
+                        <SelectItem value="medium">กลาง (500-800 คำ)</SelectItem>
+                        <SelectItem value="long">ยาว (800-1200 คำ)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="style">สไตล์บทความ</Label>
+                    <Select value={formData.style} onValueChange={(value) => handleInputChange('style', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="How-to">How-to (วิธีการ)</SelectItem>
+                        <SelectItem value="AIDA">AIDA (การตลาด)</SelectItem>
+                        <SelectItem value="Review">Review (รีวิว)</SelectItem>
+                        <SelectItem value="EEAT">E-E-A-T (ความน่าเชื่อถือ)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="keywords">จำนวนคีย์เวิร์ด</Label>
+                    <Select value={formData.keywordCount.toString()} onValueChange={(value) => handleInputChange('keywordCount', parseInt(value))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3">3 คีย์เวิร์ด</SelectItem>
+                        <SelectItem value="5">5 คีย์เวิร์ด</SelectItem>
+                        <SelectItem value="7">7 คีย์เวิร์ด</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button 
+                    onClick={generateArticle} 
+                    className="w-full" 
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        กำลังสร้างบทความ...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        สร้างบทความ
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* แสดงผลลัพธ์ - ขยายให้ใหญ่ขึ้น */}
+            <div className="lg:col-span-2">
+              <Card className="glass h-full">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>บทความที่สร้างแล้ว</CardTitle>
+                      <CardDescription>ผลลัพธ์บทความ SEO ที่ AI สร้างให้คุณ</CardDescription>
+                    </div>
+                    {generatedArticle && (
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={copyToClipboard}
+                          variant="outline" 
+                          size="sm"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          คัดลอก
+                        </Button>
+                        <Button 
+                          onClick={downloadArticle}
+                          variant="outline" 
+                          size="sm"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          ดาวน์โหลด
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                      <Loader2 className="h-12 w-12 animate-spin text-green-500" />
+                      <p className="text-gray-600 text-center text-lg">
+                        กำลังสร้างบทความ SEO ที่ดีที่สุดสำหรับคุณ...
+                      </p>
+                      <div className="w-64 bg-gray-200 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full animate-pulse w-3/4"></div>
+                      </div>
+                    </div>
+                  ) : generatedArticle ? (
+                    <div className="space-y-4">
+                      {/* แสดงบทความในรูปแบบ formatted */}
+                      <div className="bg-white border rounded-lg p-6 max-h-96 overflow-y-auto">
+                        <div className="prose prose-sm max-w-none">
+                          {generatedArticle.split('\n').map((line, index) => {
+                            if (line.startsWith('# ')) {
+                              return <h1 key={index} className="text-2xl font-bold text-gray-900 mb-4">{line.substring(2)}</h1>;
+                            } else if (line.startsWith('## ')) {
+                              return <h2 key={index} className="text-xl font-semibold text-gray-800 mb-3 mt-6">{line.substring(3)}</h2>;
+                            } else if (line.startsWith('### ')) {
+                              return <h3 key={index} className="text-lg font-medium text-gray-700 mb-2 mt-4">{line.substring(4)}</h3>;
+                            } else if (line.startsWith('- ')) {
+                              return <li key={index} className="text-gray-600 mb-1 ml-4">{line.substring(2)}</li>;
+                            } else if (line.match(/^\d+\./)) {
+                              return <li key={index} className="text-gray-600 mb-1 ml-4 list-decimal">{line.substring(line.indexOf('.') + 2)}</li>;
+                            } else if (line.startsWith('*') && line.endsWith('*')) {
+                              return <p key={index} className="text-gray-500 italic text-sm mt-4">{line.substring(1, line.length - 1)}</p>;
+                            } else if (line.trim()) {
+                              return <p key={index} className="text-gray-600 mb-3 leading-relaxed">{line}</p>;
+                            } else {
+                              return <br key={index} />;
+                            }
+                          })}
+                        </div>
+                      </div>
+                      
+                      {/* Raw text สำหรับแก้ไข */}
+                      <div className="space-y-2">
+                        <Label>ข้อความดิบ (สำหรับแก้ไข)</Label>
+                        <Textarea
+                          value={generatedArticle}
+                          onChange={(e) => setGeneratedArticle(e.target.value)}
+                          className="min-h-64 font-mono text-sm"
+                          placeholder="บทความจะแสดงที่นี่..."
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-20 text-gray-500">
+                      <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-xl font-medium mb-2">ยังไม่มีบทความ</p>
+                      <p className="text-sm">กรุณากรอกข้อมูลและกดปุ่ม "สร้างบทความ" เพื่อเริ่มต้น</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </main>
