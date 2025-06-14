@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -78,48 +79,44 @@ const Writer = () => {
       });
 
       if (response.ok) {
-        // รับ response เป็น text
-        const result = await response.text();
-        console.log('Raw response from webhook:', result);
+        const contentType = response.headers.get('content-type');
+        let result;
         
-        // ตรวจสอบว่าเป็น JSON หรือไม่
-        let finalContent = result;
-        try {
-          const jsonResponse = JSON.parse(result);
-          // ถ้าได้ JSON ที่มี message: "Workflow was started" แสดงว่ายังไม่ได้บทความจริง
-          if (jsonResponse.message === "Workflow was started") {
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+          console.log('JSON response from webhook:', result);
+          
+          // ตรวจสอบว่ามีเนื้อหาบทความหรือไม่
+          if (result.article) {
+            setGeneratedArticle(result.article);
+          } else if (result.content) {
+            setGeneratedArticle(result.content);
+          } else if (result.output) {
+            setGeneratedArticle(result.output);
+          } else if (result.text) {
+            setGeneratedArticle(result.text);
+          } else if (result.message === "Workflow was started") {
+            // หากยังไม่ได้ผลลัพธ์ ให้รอและลองขอข้อมูลอีกครั้ง
             toast({
               title: "กำลังประมวลผล",
-              description: "ระบบได้รับคำขอแล้ว กรุณารอสักครู่...",
+              description: "กำลังสร้างบทความ กรุณารอสักครู่...",
             });
             
-            // รอ response ที่แท้จริงจาก webhook
-            // ในกรณีนี้เราจะใช้ mock เป็น fallback ชั่วคราว
-            finalContent = `# ${formData.topic}
-
-## บทนำ
-${formData.topic} เป็นหัวข้อที่สำคัญและน่าสนใจในปัจจุบัน ซึ่งจะช่วยให้ผู้อ่านเข้าใจและได้รับประโยชน์จากข้อมูลที่นำเสนอ
-
-## เนื้อหาหลัก
-บทความนี้ใช้สไตล์ ${formData.style} ในการนำเสนอ โดยมีความยาว${formData.length === 'short' ? 'สั้น' : formData.length === 'medium' ? 'กลาง' : 'ยาว'} และจะรวมคีย์เวิร์ดสำคัญ ${formData.keywordCount} คำ
-
-### ประเด็นสำคัญที่ควรทราบ
-1. **ข้อมูลพื้นฐานเกี่ยวกับ ${formData.topic}** - การทำความเข้าใจพื้นฐานที่จำเป็น
-2. **ประโยชน์และความสำคัญ** - เหตุผลที่ควรให้ความสนใจกับเรื่องนี้
-3. **วิธีการประยุกต์ใช้** - แนวทางการนำไปใช้ในชีวิตจริง
-
-## สรุป
-${formData.topic} เป็นเรื่องที่มีความสำคัญและสามารถนำไปประยุกต์ใช้ได้จริง การทำความเข้าใจอย่างถ่องแท้จะช่วยให้ได้รับประโยชน์สูงสุด`;
+            // ลองดึงข้อมูลอีกครั้งหลังจาก 3 วินาที
+            setTimeout(() => {
+              fetchArticleResult();
+            }, 3000);
+            return;
           } else {
-            // ถ้าได้ content จาก JSON
-            finalContent = jsonResponse.output || jsonResponse.content || jsonResponse.article || result;
+            // ถ้าไม่มีเนื้อหาในรูปแบบที่คาดหวัง ให้แสดง JSON ทั้งหมด
+            setGeneratedArticle(JSON.stringify(result, null, 2));
           }
-        } catch (jsonError) {
-          // ถ้าไม่ใช่ JSON ให้ใช้ text ตรงๆ
-          finalContent = result;
+        } else {
+          result = await response.text();
+          console.log('Text response from webhook:', result);
+          setGeneratedArticle(result);
         }
         
-        setGeneratedArticle(finalContent);
         toast({
           title: "สำเร็จ!",
           description: "สร้างบทความเรียบร้อยแล้ว",
@@ -136,6 +133,58 @@ ${formData.topic} เป็นเรื่องที่มีความส�
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ฟังก์ชันสำหรับดึงผลลัพธ์บทความ (ใช้เมื่อ workflow started)
+  const fetchArticleResult = async () => {
+    try {
+      const resultUrl = 'http://localhost:5678/webhook-test/result'; // URL สำหรับดึงผลลัพธ์
+      
+      const response = await fetch(resultUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        let result;
+        
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+        } else {
+          result = await response.text();
+        }
+        
+        console.log('Article result from webhook:', result);
+        
+        if (typeof result === 'string' && result.trim()) {
+          setGeneratedArticle(result);
+          toast({
+            title: "สำเร็จ!",
+            description: "ได้รับบทความจาก AI แล้ว",
+          });
+        } else if (result.article || result.content || result.output) {
+          setGeneratedArticle(result.article || result.content || result.output);
+          toast({
+            title: "สำเร็จ!",
+            description: "ได้รับบทความจาก AI แล้ว",
+          });
+        }
+      } else {
+        console.log('ยังไม่ได้ผลลัพธ์ ลองอีกครั้งใน 3 วินาที');
+        setTimeout(() => {
+          fetchArticleResult();
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error fetching article result:', error);
+      // ถ้าเกิดข้อผิดพลาด ให้ลองอีกครั้ง
+      setTimeout(() => {
+        fetchArticleResult();
+      }, 5000);
     }
   };
 
@@ -317,7 +366,7 @@ ${formData.topic} เป็นเรื่องที่มีความส�
                     <div className="flex flex-col items-center justify-center py-20 space-y-4">
                       <Loader2 className="h-12 w-12 animate-spin text-green-500" />
                       <p className="text-gray-600 text-center text-lg">
-                        กำลังส่งคำขอไปยัง AI Webhook...
+                        กำลังส่งคำขอไปยัง AI Webhook และรอผลลัพธ์...
                       </p>
                       <div className="w-64 bg-gray-200 rounded-full h-2">
                         <div className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full animate-pulse w-3/4"></div>
@@ -341,10 +390,6 @@ ${formData.topic} เป็นเรื่องที่มีความส�
                               return <li key={index} className="text-gray-600 mb-1 ml-4 list-disc">{line.substring(2)}</li>;
                             } else if (line.match(/^\d+\./)) {
                               return <li key={index} className="text-gray-600 mb-1 ml-4 list-decimal">{line.substring(line.indexOf('.') + 2)}</li>;
-                            } else if (line.startsWith('*') && line.endsWith('*') && !line.startsWith('**')) {
-                              return <p key={index} className="text-gray-500 italic text-sm mt-4 border-t pt-4">{line.substring(1, line.length - 1)}</p>;
-                            } else if (line.startsWith('---')) {
-                              return <hr key={index} className="my-4 border-gray-300" />;
                             } else if (line.trim()) {
                               return <p key={index} className="text-gray-700 mb-3 leading-relaxed">{line}</p>;
                             } else {
