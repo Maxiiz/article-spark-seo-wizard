@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -291,6 +290,10 @@ const Writer = () => {
                         <SelectItem value="AIDA">AIDA (การตลาด)</SelectItem>
                         <SelectItem value="Review">Review (รีวิว)</SelectItem>
                         <SelectItem value="EEAT">E-E-A-T (ความน่าเชื่อถือ)</SelectItem>
+                        <SelectItem value="First-Hand">ประสบการณ์ตรง (First-Hand Experience)</SelectItem>
+                        <SelectItem value="Expert">ผู้เชี่ยวชาญ (Expert Authority)</SelectItem>
+                        <SelectItem value="Trustworthy">น่าเชื่อถือ (Trustworthy Guide)</SelectItem>
+                        <SelectItem value="In-Depth">รีวิวเชิงลึก (In-Depth Review)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
